@@ -5,7 +5,7 @@ import requests
 import streamlit as st
 
 # -----------------------------------------------------------------------------
-# 1. 페이지 설정 및 커스텀 CSS (메인 영역 강조 & 위아래 레이아웃 컴팩트화)
+# 1. 페이지 기본 설정 및 다크 시네마 테마(CSS) 적용
 # -----------------------------------------------------------------------------
 st.set_page_config(
     page_title="KOBIS 박스오피스 비교 분석",
@@ -13,53 +13,58 @@ st.set_page_config(
     layout="wide",
 )
 
-# 커스텀 CSS: 스크롤 시 주요 분석 메인 영역에 시선이 집중되도록
-# 상단 서비스 안내 및 하단 영역의 폰트/패딩 사이즈를 콤팩트하게 줄였습니다.
+# 배경 색상 및 요소별 시네마틱 다크 스타일링
 st.markdown(
     """
     <style>
-    /* 상/하단 서브 영역 콤팩트 스타일링 */
+    /* 1. 전체 기본 배경 (깊은 다크 블루/슬레이트) */
+    .stApp {
+        background-color: #0f172a;
+        color: #f8fafc;
+    }
+    
+    /* 2. 상단/하단 안내 카드 스타일 */
     .compact-container {
-        background-color: #f8f9fa;
-        padding: 10px 15px;
-        border-radius: 8px;
-        border: 1px solid #e9ecef;
+        background-color: #1e293b;
+        padding: 12px 16px;
+        border-radius: 10px;
+        border: 1px solid #334155;
         font-size: 0.85rem;
-        color: #495057;
-        margin-bottom: 10px;
+        color: #cbd5e1;
+        margin-bottom: 8px;
     }
     .compact-container h5 {
         font-size: 0.95rem;
         margin-bottom: 4px;
-        color: #212529;
-    }
-    .compact-container p {
-        font-size: 0.8rem;
-        line-height: 1.3;
-        margin-bottom: 6px;
+        color: #f8fafc;
     }
     
-    /* TOP 1~3 메인 강조 카드 스타일링 */
+    /* 3. TOP 1~3 메인 강조 카드 스타일 */
     .top-rank-card {
-        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-        border: 2px solid #e2e8f0;
+        background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+        border: 1px solid #334155;
         border-radius: 12px;
         padding: 16px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.04);
-        margin-bottom: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     }
-    .top-1-card { border-top: 5px solid #ffd700; } /* 금메달 색상 */
-    .top-2-card { border-top: 5px solid #c0c0c0; } /* 은메달 색상 */
-    .top-3-card { border-top: 5px solid #cd7f32; } /* 동메달 색상 */
+    .top-1-card { border-top: 4px solid #f59e0b; } /* 🥇 금메달 골드 */
+    .top-2-card { border-top: 4px solid #94a3b8; } /* 🥈 은메달 실버 */
+    .top-3-card { border-top: 4px solid #d97706; } /* 🥉 동메달 브론즈 */
     
     .movie-title-header {
-        font-size: 1.15rem;
+        font-size: 1.1rem;
         font-weight: 700;
-        margin-bottom: 12px;
-        color: #1a202c;
+        color: #ffffff;
+        margin-top: 4px;
+        margin-bottom: 8px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+    
+    /* 4. Streamlit Metric 지표 글자색 가독성 보장 */
+    [data-testid="stMetricValue"] {
+        color: #f8fafc !important;
     }
     </style>
 """,
@@ -73,7 +78,6 @@ kst = timezone(timedelta(hours=9))
 today_kst = datetime.now(kst).date()
 yesterday_kst = today_kst - timedelta(days=1)
 
-# 메인 타이틀 및 날짜 선택 (최대 선택 가능일: 어제)
 st.title("🎬 일일 박스오피스 비교·분석")
 
 selected_date = st.date_input(
@@ -87,7 +91,7 @@ target_date = selected_date.strftime("%Y%m%d")
 display_date = selected_date.strftime("%Y년 %m월 %d일")
 
 # -----------------------------------------------------------------------------
-# 3. 상단 KOBIS 주요 서비스 안내 (스크롤 시 부담 없도록 콤팩트 배치)
+# 3. 상단 KOBIS 주요 서비스 안내 (접이식 콤팩트 배치)
 # -----------------------------------------------------------------------------
 with st.expander("🍿 KOBIS 주요 서비스 바로가기 (클릭하여 열기/접기)", expanded=False):
     card_col1, card_col2 = st.columns(2)
@@ -97,7 +101,7 @@ with st.expander("🍿 KOBIS 주요 서비스 바로가기 (클릭하여 열기/
             """
             <div class="compact-container">
                 <h5>📅 박스오피스</h5>
-                <p>일별, 주간, 월별, 연도별 매출액 및 누적 관객수 랭킹 정보를 제공합니다.</p>
+                <p>일별, 주간, 월별, 연도별 매출액 및 관객수 랭킹 정보를 조회합니다.</p>
             </div>
         """,
             unsafe_allow_html=True,
@@ -126,7 +130,7 @@ with st.expander("🍿 KOBIS 주요 서비스 바로가기 (클릭하여 열기/
             """
             <div class="compact-container">
                 <h5>🎟️ 실시간 예매율</h5>
-                <p>상영 2시간 이후의 예매 데이터를 실시간으로 집계한 예매율을 제공합니다.</p>
+                <p>상영 2시간 이후의 예매 데이터를 실시간 집계하여 제공합니다.</p>
             </div>
         """,
             unsafe_allow_html=True,
@@ -140,7 +144,7 @@ with st.expander("🍿 KOBIS 주요 서비스 바로가기 (클릭하여 열기/
             """
             <div class="compact-container" style="margin-top:10px;">
                 <h5>🖥️ 스크린 점유율</h5>
-                <p>영화별 스크린수, 스크린 점유율, 상영횟수 등의 통계를 제공합니다.</p>
+                <p>영화별 스크린수, 스크린 점유율, 상영횟수 통계를 제공합니다.</p>
             </div>
         """,
             unsafe_allow_html=True,
@@ -218,7 +222,7 @@ df["audiAcc"] = df["audiAcc"].astype(int)
 df["scrnCnt"] = df["scrnCnt"].astype(int)
 
 
-# 순위 증감 화살표 표시 함수
+# 순위 증감 화살표 함수
 def format_rank_change(val):
     if val > 0:
         return f"🔺 +{val}"
@@ -231,7 +235,7 @@ def format_rank_change(val):
 df["rank_change"] = df["rankInten"].apply(format_rank_change)
 
 
-# 누적 관객수 100만 명 이상 트로피 🏆 표시 함수
+# 100만 이상 관객 트로피(🏆) 표기 함수
 def format_movie_title(row):
     title = row["movieNm"]
     if row["audiAcc"] >= 1_000_000:
@@ -242,9 +246,9 @@ def format_movie_title(row):
 df["display_movieNm"] = df.apply(format_movie_title, axis=1)
 
 # -----------------------------------------------------------------------------
-# 6. 메인 콘텐츠 1: TOP 1, 2, 3 독립 하이라이트 카드 (독자적 제목 및 지표 비교)
+# 6. 메인 1: TOP 1, 2, 3 독립 하이라이트 카드
 # -----------------------------------------------------------------------------
-st.subheader(f"🔥 {display_date} 박스오피스 TOP 3 영화 비교")
+st.subheader(f"🔥 {display_date} 박스오피스 TOP 3 영화")
 
 top_3_df = df.head(3)
 cols = st.columns(3)
@@ -258,7 +262,7 @@ for i in range(min(3, len(top_3_df))):
         st.markdown(
             f"""
             <div class="top-rank-card {card_classes[i]}">
-                <span style="font-size:0.85rem; font-weight:bold; color:#718096;">{badges[i]}</span>
+                <span style="font-size:0.85rem; font-weight:bold; color:#94a3b8;">{badges[i]}</span>
                 <div class="movie-title-header">{movie['display_movieNm']}</div>
             </div>
             """,
@@ -276,62 +280,83 @@ for i in range(min(3, len(top_3_df))):
 st.divider()
 
 # -----------------------------------------------------------------------------
-# 7. 메인 콘텐츠 2: 상위 영화 시각화 비교 (슬림한 막대그래프)
+# 7. 메인 2: 그래프 나란히 배치 (관객수 vs 스크린수 비교)
 # -----------------------------------------------------------------------------
-st.subheader("📊 관객수 vs 스크린수 상위 영화 비교 분석")
+st.subheader("📊 TOP 5 영화: 관객수 vs 스크린수 한눈에 비교")
 
-# 슬림한 슬라이더/라디오 버튼으로 지표 선택
-chart_metric = st.radio(
-    "비교할 지표를 선택하세요:",
-    ["일일 관객수 (명)", "스크린수 (개)"],
-    horizontal=True,
-)
-
+chart_col1, chart_col2 = st.columns(2)
 top_5_df = df.head(5).copy()
 
-if chart_metric == "일일 관객수 (명)":
-    y_col = "audiCnt"
-    y_title = "일일 관객수 (명)"
-    bar_color = "#E53E3E"  # 포인트 레드
-else:
-    y_col = "scrnCnt"
-    y_title = "스크린수 (개)"
-    bar_color = "#3182CE"  # 포인트 블루
+# 공통 차트 축 설정 (다크 테마용 가독성 폰트 색상)
+axis_style = alt.Axis(
+    labelAngle=-20,
+    labelFontSize=11,
+    labelColor="#cbd5e1",
+    titleColor="#94a3b8",
+)
 
-# Altair 기반 슬림 막대그래프 (두께 size=26, 상단 둥근 모서리)
-chart = (
+# 1) 좌측: 일일 관객수 그래프 (오렌지 포인트)
+chart_audi = (
     alt.Chart(top_5_df)
     .mark_bar(
-        size=26,
-        cornerRadiusTopLeft=6,
-        cornerRadiusTopRight=6,
-        color=bar_color,
+        size=22,
+        cornerRadiusTopLeft=5,
+        cornerRadiusTopRight=5,
+        color="#f97316",
     )
     .encode(
-        x=alt.X(
-            "display_movieNm:N",
-            title="영화명",
-            sort="-y",
-            axis=alt.Axis(labelAngle=0, labelFontSize=11),
+        x=alt.X("display_movieNm:N", title="영화명", sort="-y", axis=axis_style),
+        y=alt.Y(
+            "audiCnt:Q",
+            title="일일 관객수 (명)",
+            axis=alt.Axis(labelColor="#cbd5e1", titleColor="#94a3b8"),
         ),
-        y=alt.Y(f"{y_col}:Q", title=y_title),
         tooltip=[
             alt.Tooltip("rank:Q", title="순위"),
             alt.Tooltip("movieNm:N", title="영화명"),
             alt.Tooltip("audiCnt:Q", title="일일 관객수", format=","),
-            alt.Tooltip("audiAcc:Q", title="누적 관객수", format=","),
+        ],
+    )
+    .properties(height=280)
+)
+
+# 2) 우측: 스크린수 그래프 (블루 포인트)
+chart_scrn = (
+    alt.Chart(top_5_df)
+    .mark_bar(
+        size=22,
+        cornerRadiusTopLeft=5,
+        cornerRadiusTopRight=5,
+        color="#3b82f6",
+    )
+    .encode(
+        x=alt.X("display_movieNm:N", title="영화명", sort="-y", axis=axis_style),
+        y=alt.Y(
+            "scrnCnt:Q",
+            title="스크린수 (개)",
+            axis=alt.Axis(labelColor="#cbd5e1", titleColor="#94a3b8"),
+        ),
+        tooltip=[
+            alt.Tooltip("rank:Q", title="순위"),
+            alt.Tooltip("movieNm:N", title="영화명"),
             alt.Tooltip("scrnCnt:Q", title="스크린수", format=","),
         ],
     )
-    .properties(height=300)
+    .properties(height=280)
 )
 
-st.altair_chart(chart, use_container_width=True)
+with chart_col1:
+    st.markdown("##### 🎟️ 일일 관객수 TOP 5")
+    st.altair_chart(chart_audi, use_container_width=True)
+
+with chart_col2:
+    st.markdown("##### 🖥️ 스크린수 TOP 5")
+    st.altair_chart(chart_scrn, use_container_width=True)
 
 st.divider()
 
 # -----------------------------------------------------------------------------
-# 8. 메인 콘텐츠 3: 전체 순위 표 (한눈에 비교하기 쉬운 가독성 강화)
+# 8. 메인 3: 전체 순위 목록 표
 # -----------------------------------------------------------------------------
 st.subheader("📋 전체 박스오피스 순위 목록")
 
@@ -357,21 +382,19 @@ table_df.columns = [
     "스크린수",
 ]
 
-# 숫자에 천 단위 쉼표 및 단위 명시
 table_df["관객수"] = table_df["관객수"].map("{:,}명".format)
 table_df["누적관객"] = table_df["누적관객"].map("{:,}명".format)
 table_df["스크린수"] = table_df["스크린수"].map("{:,}개".format)
 
-# 전체 테이블 출력
 st.dataframe(table_df, use_container_width=True, hide_index=True)
 
 # -----------------------------------------------------------------------------
-# 9. 하단 서브 안내 (컴팩트 폰트 스타일)
+# 9. 하단 서브 안내
 # -----------------------------------------------------------------------------
 st.markdown(
     """
-    <div class="compact-container" style="text-align: center; margin-top: 30px;">
-        <small>💡 본 데이터는 영화진흥위원회(KOBIS) 오픈 API를 통해 실시간으로 제공됩니다. (100만 관객 돌파 영화에는 🏆 표시가 부여됩니다.)</small>
+    <div class="compact-container" style="text-align: center; margin-top: 20px;">
+        <small>💡 본 데이터는 영화진흥위원회(KOBIS) 오픈 API를 통해 제공됩니다. (누적 관객 100만 돌파 영화에는 🏆 표시가 부여됩니다.)</small>
     </div>
 """,
     unsafe_allow_html=True,
